@@ -695,6 +695,7 @@ sum_plot <- ggplot(all_trt_effects) +
        color = 'p-value') +
   scale_color_discrete(labels = c('p > 0.5', 'p < 0.5')) + 
   coord_flip() 
+# ggsave('./assets/summary-findings.png', sum_plot, width = 9, height = 4, units = 'in')
 sum_plot
 ```
 
@@ -724,7 +725,7 @@ Using a data set that surveyed youth in the 7th - 12th grade for the internal & 
 
 * Creative activities: youth spends 3+ hours of free time learning music, art, drama, dance
 
-The results of this research will be presented to CFMC and DMFYS in order to inform the programs that they will fund and implement moving forward. A majority of DMFYS's programs already focus on parent involvement and creative activities. A quick look at their website revaeals a "proactive parenting" workshop series and "F.U.N. nights" which includes dancing/arts & crafts. This will serve as validation for the work they are doing. (Coincidentally, DMFYS is of the most longstanding relationship that CFMC has.) 
+The results of this research will be presented to CFMC and DMFYS in order to inform the programs that they will fund and implement moving forward. A majority of DMFYS's programs already focus on parent involvement and creative activities. A quick look at their website reveals a "proactive parenting" workshop series and "F.U.N. nights" which includes dancing/arts & crafts. This will serve as validation for the work they are doing. (Coincidentally, DMFYS is of the most longstanding relationship that CFMC has.) 
 
 However, many other nonprofits are doing work in other areas. For example, [Clinton Youth and Family Services](https://clintonyouthandfamily.org/) is another nonprofit with similar goals and target demographic as DMFYS. Their website reveals great programs that focus on year-long counseling and summer camps. With information gleaned from this research, CFMC can suggest to other nonprofits working with youth to establish programs that advocate for greater parent involvment in school through a all-parent-book club or all-parent-sports team to increase social ties between parents and hopefully the school. Also, CFMC can recommend programs that increase creative activity opportunities for youth by hosting a play or dance show. 
 
