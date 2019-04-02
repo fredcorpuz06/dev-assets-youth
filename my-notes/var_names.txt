@@ -1,0 +1,25 @@
+Mathching variables: External
+
+Commitment to Learning <- c()
+"Q26","Q28","Q13","Q34","Q35","Q36","Q37","Q20","Q49","Q65"
+
+Positive values
+"Q7","Q9","Q14","Q8","Q11","Q13","Q15","Q16","Q17","Q18","Q19","Q39","Q47",
+
+Social Competencies
+"Q72","Q81","Q71","Q77","Q78","Q74","Q79","Q80","Q70","Q76","Q135",
+
+Positive Identity
+"Q119","Q141","Q38","Q41","Q43","Q44","Q113","Q120",
+
+CollectorID
+
+"RaceIndian","RaceAsian","RaceBlack","RaceHispanic","RaceIslander","RaceWhite","RaceOther"
+RaceIndian,RaceAsian,RaceBlack,RaceHispanic,RaceIslander,RaceWhite,RaceOther
+"Q152","Q150","Q153","Q154","Q102"
+
+Treatments
+"Q25","Q149","Q115","Q67","Q63","Q69"
+
+'Q26','Q28','Q34','Q49','Q74','Q119'
+"Q120","Q38","Q7","Q8","Q47","Q78","Q43"

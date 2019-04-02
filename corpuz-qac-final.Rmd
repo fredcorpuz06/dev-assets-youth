@@ -1,0 +1,741 @@
+---
+title: "Developmental Assets for Middlesex Youth"
+author: "Frederick Corpuz"
+date: "December 13, 2018"
+output: 
+  html_document:
+    code_folding: hide
+    theme: journal
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE
+)
+```
+
+
+```{r}
+library(tableone)
+library(Matching)
+library(magrittr)
+library(readxl)
+library(tidyverse)
+```
+
+
+# {.tabset}
+
+## Introduction
+
+### I. Research Question
+
+I plan to study the external factors - intensity of familial support, safety of neighborhoods, presence of youth programs, etc. - that impact the development of youth in order to generate hypotheses on which factors make the most positive impact.
+
+*The research question is:* How do the presence of developmental assets provided for youth by the community affect youth outcomes in Middlefield and Deep River?
+
+
+### II. Motivation
+
+I am interested in this because for the class I am taking, [Nonprofit Boards: Theory and Practice](https://iasext.wesleyan.edu/regprod/!wesmaps_page.html?stuid=&facid=NONE&crse=014704&term=1189), I am working on a project with the [Community Foundation of Middlesex](https://middlesexcountycf.org/) 
+My data-driven project is focused on the work youth and family services nonprofits and the different ways that these nonprofits can positively impact the lives of youth.
+The organizations working with the CFMC have provided data from reports they had created in the years past. People at the CFMC are interested in "What developmental assets should youth services nonprofits put the most resources into?" so that they can provide valuable advice to growing nonprofits. I am in the middle of my 2-semester long project with them by investigating the most complete dataset they have provided me. The dataset was provided to CFMC and to me by the [Durham Youth and Family Services](http://www.dmyfs.org/about.html), a nonprofit "dedicated to the health and well-being of Durham and Middlefield". 
+
+![CFMC](./assets/cfmc-logo.png)![DMFYS](./assets/dmfys-logo.jpg)
+
+## Methods
+
+### I. Sample
+
+A single observational unit for this research is a youth in 7th - 12th grade (typically 12 to 17 years of age). The racial demographic make-up can be observed in the graph below. We can clearly see that the sample is predominantly white. 
+
+
+```{r}
+df <- read_excel('./data/dfys-17.xlsx')
+```
+
+There are `r dim(df)[1]` youths who participated in the survey. There are `r dim(df)[2]` questions in the survey.
+
+```{r, results='asis'}
+race <- c("RaceIndian","RaceAsian","RaceBlack",
+            "RaceHispanic","RaceIslander","RaceWhite","RaceOther")
+
+for_viz <- df %>% 
+  select(race) %>% 
+  colSums(., na.rm = TRUE)
+knitr::kable(for_viz)
+```
+
+```{r}
+ggplot()  +
+  geom_bar(aes(x = names(for_viz), y=for_viz), stat = 'identity') +
+  labs(title = 'Racial Demographic',
+       x = 'Race',
+       y = 'Count') +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+  
+
+```
+
+
+
+### II. Procedures
+
+All the students were in one of the two schools who participated in the survey conducted by the Search Institute in 2015. The Search institute was contracted by DMFYS to conduct this study to better inform their nonprofit work. According to the [FAQs on the Search Institutes site](https://www.search-institute.org/surveys/survey-faqs/), the survey was intended to be administered to all the student at both [Frank Strong](http://strong.rsd13ct.org/) and [Coginchaug school](http://crhs.rsd13ct.org/), however due to the sensitive questions asked on the anonymous survey (i.e. *"How many times did you feel sad/depressed this past month"*) only students who attained active consent from parents. Even with parent consent, student participation is voluntary. 
+
+The survey was simultaneously admistered to all the students in each school over a span of 2 hours. The number of students from each school is summarized in the table below. 
+
+
+```{r, results='asis'}
+df %>% 
+  select(CollectorID) %>% 
+  group_by(CollectorID) %>% 
+  count() %>% 
+  knitr::kable(.)
+```
+
+
+Not every student answered all the questions for the variables of interest in this research. An `na.omit()` was implemented to remove all missing values in the variables of interest
+
+I have no information on the randomization implemented for the collection of this dataset outside of what is mentioned above on voluntary test taking. Since this is an observational study and the data collection has a high overhead cost, the methods used in this research will aim to account for the lack of explicit randomization.
+
+### III. Measures
+
+* **Matching**
+
+In the survey, there were over 50 questions attemption to quantify the inner characteristics of a youth. These are the provide nonprofits information of the mindset of kids they are working with, determining which problems occur in most kids and allow them to target their efforts to the kids who need the most help. They are termed as **internal developmental assets**. A few examples are in the table below. 
+
+
+  Asset | Category | Question | Question Marker |
+|------|-----|----------------------------------------|------|
+| Cultural competence | Social competencies | How do you think people who know you well would rate you on |  Q74 |
+| Equality and social justice | Positive values | Helping to reduce hunger and poverty in the world | Q8 |
+| Personal power | Positive identity | I have little control over the things that will happen in my life. | Q141 |
+| School engagement | Commitment to learning | How often do you feel bored at school? | Q34 |
+
+* **Treament**
+
+In the survey, there were over 40 questions attempting to quantify the positive developmental experiences provided for youth by the network of people and systems in their lives. They are termed as **external developmental assets**. I have selected 6 that are most actionable from the point of view of nonprofits.
+
+The treatment variables to be investigated and the questions on the survey used to quantify them are summarized in the table below.
+
+
+
+ Asset | Category | Question | Possible Answers | Question Marker |
+|------|-----|-----------------------|----------------------|------|
+| Parent involvement in school | Support | Go to meetings or events at your school? | Very often, often, sometimes, seldom, never | Q25 |
+| Other adult relationships | Support | How many adults have you known for 2+ years who talk with you at least once a month? | 0, 1, 2, 3-4, 5 or more | Q149 |
+| Community values youth | Empowerment | Adults in my town or city listen to what I have to say | strongly agree, agree, not sure, disagree, strongly disagree | Q115 |
+| Service to others | Empowerment | During an average week, how many hours do you spend helping other people without getting paid (such as helping out a hospital, daycare center, food shelf, youth program, community service agency, or doing other things) to make your city a better place for people to live? | 0, 1, 2, 3-5, 6-10, 11+  | Q67 |
+| Youth programs | Constructive Use Time | During an average week, how many hours do you spend in clubs or organizations at school (for example, school newspaper, student government, school plays, language clubs, hobby clubs, drama club, debate, etc)? | 0, 1, 2, 3-5, 6-10, 11+  | Q63 |
+| Creative activities | Constructive Use Time | During an average week, how many hours do you spend practicing or taking lessons in music, art, drama, or dance after school or on weekends? | 0, 1, 2, 3-5, 6-10, 11+  | Q69 |
+
+
+
+* **Response**
+
+The response variables are intended to approximate a measure of a youth thriving in their community. The **thriving indicators** and the questions that are used to measure their presence in a youth's life are summarized in the table below.
+
+The reliability of measurements was guaranteed by ensuring that the thriving indicator questions were evenly dispersed throughout the 160-question survey to avoid the survey takers noticing that specific factors/behaviors were of the most interest. 
+
+The thriving indicators will be utilized as a quantitative variable from `(0-8)` which signals how many of the 8 thriving indicators are present in a youth.
+
+
+ Thriving Indicator | Question | 
+|------|----------------------------------------------|
+| Succeeds in school | What grades do you earn in school? | 
+| Helps others | During an average week, how many hours do you sepnd helping friends or neigbhors? | 
+| Values diversity | How important is 'getting to know people who are of a different race than you are' to you? |
+| Maintains good healt | How do you think people who know you well would rate you on 'taking good care of your body - eating good food, regular exercise' |
+| Exhibits leadership | During the last 12 months, how many times have you been in a group or organization? |
+| Resists danger | I look to do exciting things even if they are dangerous  |
+| Delays gratification | How do you think people who know you well would rate you on 'saving your money fo something special rather than spending it all right away'? |
+| Overcomes adversity | How do you think people who know you well would rate you on 'giving up when things get hard for you'? |
+
+
+
+## Results: Data munging
+
+Since this is an observational study, in order to perform statistical techniques intended for data from randomized trials, matching will be used to minimize bias from variables that aren't accounted for. After a 1-to-1 matching of students with similar *internal developmental assets* and belong to the same *demographic*, the impact of the 6 *actionable external developmental assets* on the number of thriving indicators will be measured through a t-test.
+
+In this part we will be cleaning up the data, viewing each of the 6 treatment variables, and determining viable cut-off points for each.
+
+### Declaring variables
+
+* Matching variables
+
+```{r}
+## External variables
+commit_learning <- c("Q26","Q28","Q13","Q34","Q35",
+                     "Q36","Q37","Q20","Q49","Q65")
+pos_value <- c("Q7","Q9","Q14","Q8","Q11",
+               "Q15","Q16","Q17","Q18","Q19",
+               "Q39","Q47")
+social_comp <- c("Q72","Q81","Q71","Q77","Q78",
+                 "Q74","Q79","Q80","Q70","Q76",
+                 "Q135")
+pos_iden <- c("Q119","Q141","Q38","Q41","Q43","Q44","Q113","Q120")
+
+## Deficits
+deficits <- c("Q152","Q150","Q153","Q154","Q102")
+
+race <- c("RaceIndian","RaceAsian","RaceBlack",
+            "RaceHispanic","RaceIslander","RaceWhite","RaceOther")
+
+matching_vars <- c(commit_learning, pos_value, social_comp, 
+                   pos_iden, deficits, race)
+
+matching_vars
+
+
+
+
+```
+
+There are `r length(matching_vars)` matching variables. These are made up of the questions pertaining to internal developmental assets and demographics.
+
+* Treatment Variables
+
+```{r}
+## Treatment variables
+treat_vars <- c("Q25","Q149","Q115",
+                "Q67","Q63","Q69")
+treat_vars
+```
+
+There are `r length(treat_vars)` treatment variables. These are the most actionable external assets. 
+
+* Outcome variable
+
+```{r}
+## Outcome variable
+y_var <- 'THRIVE8'
+unique(df$THRIVE8)
+```
+
+The outcome variable is a count of how many thriving indicators (out of 8 possible) an observation has. 
+
+### Data Management
+
+
+```{r}
+df2 <- df %>% 
+  select(matching_vars, treat_vars, y_var) %>% 
+  mutate_at(race, function(x) ifelse(is.na(x), 0, x)) %>% 
+  na.omit() 
+
+knitr::kable(head(df2 %>% 
+       select(sample(1:dim(df2)[2], 6))))
+
+
+
+```
+
+Above is a random selection of the columns in our data set. There are `r dim(df2)[1]` observations and `r dim(df2)[2]` variables
+
+### Data exploration
+
+In the graph below, we can see the average number of `thriving_indicators` that a youth in each category has. There are already visible trends in "parent involvment" & "community values youth". Recall, that a higher value of thriving indicators suggests that a youth is better-off. At this point, we presume that more parent involvement & more valuing of youth voice leads to youths being better off. 
+
+*Note: Refer to table in previous section for values of question answers. The scales are sometimes flipped.*
+
+```{r}
+library(ggpubr)
+a <- ggplot(df2, aes(x = Q25, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) +
+  labs(x = "Does youth's parents attend events at school?",
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none') 
+b <- ggplot(df2, aes(x = Q149, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) +
+  labs(x = 'Does youth have adult friends?',
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none')
+c <- ggplot(df2, aes(x = Q115, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) +
+  labs(x = 'Do adults value the voice of the youth?',
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none')
+d <- ggplot(df2, aes(x = Q67, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) +
+  labs(x = 'Hours of community service work a week?',
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none')
+e <- ggplot(df2, aes(x = Q63, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) +
+  labs(x = 'Hours at clubs/organizations after school a week?',
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none')
+f <- ggplot(df2, aes(x = Q69, y = THRIVE8)) +
+  stat_summary(geom = 'bar', fun.y = mean) + 
+  labs(x = 'Hours practicing/taking lessons in art',
+       y = '# of Thrive Ind') +
+  theme(legend.position = 'none')
+  
+
+ggarrange(a,b,c,d,e,f,
+          nrow = 3,
+          ncol = 2)  %>% 
+  annotate_figure(., top = text_grob('Average # of Thriving Indicators per Treatment',
+                                     size = 16))
+```
+
+ 
+### Determining Cut-off Points
+
+Since each treatment variable has multiple levels, we are determining where the binary split for each variable is. There are 2 things to consider. Firstly, does a split at this level seem logical? Next, are there more observations in the control group (0) than the treatment group (1).
+
+For the graphs below, on the left we are inspecting what the counts of the raw responses are and on the right. We then split based on our 2 criteria above, On the right, we are looking at the number of observations in our control and treatments groups. Notice, we have constructed them in such a way that there are always more control than treatment which will become into play in out one-to-one matching later on.
+
+* Does youth's parents attend events at school often to very often?
+
+```{r}
+a <- ggplot(df2, aes(x = Q25)) + 
+  geom_bar() ## look at frequencies
+df2$parentSchool <- ifelse(df2$Q25 <= 2, 1, 0)
+b <- ggplot(df2, aes(x = factor(parentSchool))) +
+  geom_bar() +
+  labs(x = 'Q25') +
+  scale_x_discrete(labels = c('sometimes', 'often'))
+ggarrange(a, b, ncol = 2)
+```
+
+* Does youth have 5+ adult friend who they've know for over 2 years to talk to at least once a month?
+
+```{r}
+a <- ggplot(df2, aes(x = Q149)) + 
+  geom_bar()
+df2$hasAdultFriend <- ifelse(df2$Q149 >= 5 , 1, 0)
+b <- ggplot(df2, aes(x = factor(hasAdultFriend))) +
+  geom_bar() +
+  labs(x = 'Q149') +
+  scale_x_discrete(labels = c('less than 5 adults', 'more than 5 adults'))
+ggarrange(a, b, ncol = 2)
+
+```
+
+* Do adults in youth's town listen to value the voice of the youth?
+
+```{r}
+a <- ggplot(df2, aes(x = Q115)) + 
+  geom_bar()
+df2$adultsListen <- ifelse(df2$Q115 <= 2, 1, 0)
+b <- ggplot(df2, aes(x = factor(adultsListen))) +
+  geom_bar() +
+  labs(x = 'Q115') +
+  scale_x_discrete(labels = c('Disagree', 'Agree'))
+ggarrange(a, b, ncol = 2)
+
+```
+
+* Does youth average 3+ hours of community service work a week?
+
+```{r}
+a <- ggplot(df2, aes(x = Q67)) + 
+  geom_bar()
+df2$doVolunteer <- ifelse(df2$Q67 >= 4, 1, 0)
+b <- ggplot(df2, aes(x = factor(doVolunteer))) +
+  geom_bar() +
+  labs(x = 'Q67') +
+  scale_x_discrete(labels = c('less than 3 hrs', 'more than 3 hrs'))
+ggarrange(a, b, ncol = 2)
+
+```
+
+
+* Does youth spend an average of 3+ hours at clubs/organizations after school a week?
+
+```{r}
+a <- ggplot(df2, aes(x = Q63)) + 
+  geom_bar()
+df2$moreClubs <- ifelse(df2$Q63 >= 4, 1, 0)
+b <- ggplot(df2, aes(x = factor(moreClubs))) +
+  geom_bar() +
+  labs(x = 'Q63') +
+  scale_x_discrete(labels = c('less than 3 hrs', 'more than 3 hrs'))
+ggarrange(a, b, ncol = 2)
+
+```
+
+* Does youth spend an average of 3+ hours practicing/taking lessons in music, art, or drama in their free-time a week?
+
+```{r}
+a <- ggplot(df2, aes(x = Q69)) + 
+  geom_bar()
+df2$moreArt <- ifelse(df2$Q69 >= 4, 1, 0)
+b <- ggplot(df2, aes(x = factor(moreArt))) +
+  geom_bar() +
+  labs(x = 'Q69') +
+  scale_x_discrete(labels = c('less than 3 hrs', 'more than 3 hrs'))
+ggarrange(a, b, ncol = 2)
+```
+
+***
+
+Overall, the cut-offs for all variables are logical. The questions on a subjective frequency scale (agree, often) were cut-off at the just above the median. The hour based questions were cut-off above 3 hours. It can be argued that the cut-off for adult friend is the most subjective, but this is the cut-off that best satisfies the 2nd condition.
+
+
+## Results: Data analysis
+
+Since this is an observational study, in order to perform statistical techniques intended for data from randomized trials, matching will be used to minimize bias from variables that aren't accounted for. After a 1-to-1 matching of youth with similar *internal developmental assets* and belong to the same *demographic*, the impact of the 6 *actionable external developmental assets* on the number of thriving indicators will be measured through a t-test.
+
+In this section, we will be implementing **propensity matching**. Since, we are using observational data, we need to account for the lack of the randomization of the data necessary to perform a reliable t-test. We do this by with a techinique called *propensity matching* that will use *matching variables* to find a pair of observations that are as similar as possible except for the *treatment variable*. A binomial logistic regression is used with the *treatment variable* as the dependent variable and all the *matching variables* as the independent variables. This gives a **propensity score** which gives the probability of receiving treatment rather than control, given the matching variables. This score is what is used to match up observations. The caliper is kept at `caliper = 0.2` which only allows our matches to deviate by a maximum distance of `0.2 * std`, which in effect drops bad matches. 
+
+Having paired observations allows us to make conclusions (with a level of statistical confidence) about the effects of the *treatment variable* , which is our cases are *external developmental assets* / services that nonprofits can provide .
+
+### Matching
+
+* Saving differences and p-values
+
+```{r}
+all_trt_effects <- tibble(trt = c('parentSchool', 'hasAdultFriend', 'adultsListen', 'doVolunteer', 'moreClubs', 'moreArt'),
+                    trt_diff = rep(0, 6),
+                    trt_low = rep(0, 6),
+                    trt_high = rep(0, 6),
+                    trt_pval = rep(0,6))
+knitr::kable(all_trt_effects)
+```
+
+
+* Does youth's parents attend events at school?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'parentSchool')
+mod1 <- glm(parentSchool ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$parentSchool,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="parentSchool", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+
+y_trt <- matched %>% 
+  filter(parentSchool == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(parentSchool == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[1] <- mod1$estimate
+all_trt_effects$trt_low[1] <- mod1$conf.int[1]
+all_trt_effects$trt_high[1] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[1] <- mod1$p.value
+
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+* Does youth have 5+ adult friend who they've know for over 2 years to talk to at least once a month?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'hasAdultFriend')
+mod1 <- glm(hasAdultFriend ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$hasAdultFriend,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="hasAdultFriend", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+# 
+y_trt <- matched %>% 
+  filter(hasAdultFriend == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(hasAdultFriend == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[2] <- mod1$estimate
+all_trt_effects$trt_low[2] <- mod1$conf.int[1]
+all_trt_effects$trt_high[2] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[2] <- mod1$p.value
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+
+* Do adults in youth's town listen to value the voice of the youth?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'adultsListen')
+mod1 <- glm(adultsListen ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$adultsListen,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="adultsListen", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+
+y_trt <- matched %>% 
+  filter(adultsListen == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(adultsListen == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[3] <- mod1$estimate
+all_trt_effects$trt_low[3] <- mod1$conf.int[1]
+all_trt_effects$trt_high[3] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[3] <- mod1$p.value
+
+
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+
+* Does youth average 3+ hours of community service work a week?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'doVolunteer')
+mod1 <- glm(doVolunteer ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$doVolunteer,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="doVolunteer", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+
+y_trt <- matched %>% 
+  filter(doVolunteer == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(doVolunteer == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[4] <- mod1$estimate
+all_trt_effects$trt_low[4] <- mod1$conf.int[1]
+all_trt_effects$trt_high[4] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[4] <- mod1$p.value
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+* Does youth spend an average of 3+ hours at clubs/organizations after school a week?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'moreClubs')
+mod1 <- glm(moreClubs ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$moreClubs,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="moreClubs", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+
+y_trt <- matched %>% 
+  filter(moreClubs == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(moreClubs == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[5] <- mod1$estimate
+all_trt_effects$trt_low[5] <- mod1$conf.int[1]
+all_trt_effects$trt_high[5] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[5] <- mod1$p.value
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+* Does youth spend an average of 3+ hours practicing/taking lessons in music, art, or drama in their free-time a week?
+
+```{r}
+for_prop <- df2 %>% 
+  select(matching_vars, 'moreArt')
+mod1 <- glm(moreArt ~ ., family = binomial(),
+    data = for_prop)
+# summary(mod1)
+
+pscore <- mod1$fitted.values
+
+psmatch <- Match(Tr = df2$moreArt,
+                 M = 1, X = pscore,
+                 replace = FALSE,
+                 caliper = .2)
+
+
+matching_idx <- unlist(psmatch[c("index.treated","index.control")])
+matched <- df2[matching_idx, ]
+
+
+matchedtab1<-CreateTableOne(vars=matching_vars, strata ="moreArt", 
+                            data=matched, test = FALSE)
+# print(matchedtab1, smd = TRUE)
+
+y_trt <- matched %>% 
+  filter(moreArt == 1) %>% 
+  .$THRIVE8
+
+y_con <- matched %>% 
+  filter(moreArt == 0) %>% 
+  .$THRIVE8
+
+mod1 <- t.test(y_trt, y_con, paired = TRUE)
+
+
+all_trt_effects$trt_diff[6] <- mod1$estimate
+all_trt_effects$trt_low[6] <- mod1$conf.int[1]
+all_trt_effects$trt_high[6] <- mod1$conf.int[2]
+all_trt_effects$trt_pval[6] <- mod1$p.value
+
+```
+
+We have `r dim(matched)[1]/2` matched pairs after propensity matching. All SMD's are below < 0.2 which means we have adequate balance. **The estimated treatment effect is `r round(mod1$estimate, 3)` at p-value of `r round(mod1$p.value, 2)`**
+
+### Interpretation
+
+At this point, we have paired up our observations in an attempt to derive the effect of the different treatment variables - `parentSchool`, `hasAdultFriend`, `adultsListen`, `doVolunteer`, `moreClubs`, `moreArt`. In the table and graph below the size of the effects, the confidence intervals and the significance values are summarized.
+
+
+```{r}
+all_trt_effects %<>% 
+  mutate(sig = factor(ifelse(trt_pval <= 0.05, 1, 0)))
+knitr::kable(all_trt_effects)
+sum_plot <- ggplot(all_trt_effects) +
+  geom_point(aes(x = trt, y = trt_diff, color = sig), size = 7) +
+  geom_point(aes(x = trt, y = trt_low, color = sig), size = 4, shape = 18) +
+  geom_point(aes(x = trt, y = trt_high, color = sig), size = 4, shape = 18) +
+  geom_hline(yintercept = 0, size = 2, linetype = 'dashed', color = 'gray') +
+  labs(title = 'Treatment Effects on No. of Thriving Indicators ',
+       x = 'Treatment Type (Actionable External Asset)',
+       y = 'Difference between groups caused by Treatment',
+       color = 'p-value') +
+  scale_color_discrete(labels = c('p > 0.5', 'p < 0.5')) + 
+  coord_flip() 
+sum_plot
+```
+
+In the graph above, we see the treatment effect (large circle) and the confidence interval of this treatment effect (bounded by the smaller diamonds). The colors differentiate between significant and non-signifcant treatment effects.
+
+We can see that only `parentSchool` and `moreArt` have a significant effect on `THRIVE8` at the 95% confidence level. Both have a positive effect on the number of thriving factors a youth has. `parentSchool` has a smaller positive impact but a smaller confidence interval than `moreArt`.
+
+On the other hand, the other 4 treatments, have minimal/negative effect on `THRIVE8` and is also non-significant. This gives us evidence that youth and family service nonprofits should put the most attention on programs that  affect `parentSchool` and `moreArt`
+
+
+## Discussion
+
+### I. Implications of findings
+
+The findings of this research can be summarized in the graph below.
+
+```{r}
+sum_plot
+```
+
+
+This research was motivated by the question that faced the CFMC and the youth and family services nonprofits that they work with - **What developmental assets should youth services nonprofits put the most resources into?**
+
+Using a data set that surveyed youth in the 7th - 12th grade for the internal & external developmental assets available to them and indicators of them thriving, this research attempted to find most impactful actionable external assets that nonprofits can focus on. Two external assets were found to be most impactful: 
+
+* Parent involvement in school: youth's parents often to very often attend meetings in school
+
+* Creative activities: youth spends 3+ hours of free time learning music, art, drama, dance
+
+The results of this research will be presented to CFMC and DMFYS in order to inform the programs that they will fund and implement moving forward. A majority of DMFYS's programs already focus on parent involvement and creative activities. A quick look at their website revaeals a "proactive parenting" workshop series and "F.U.N. nights" which includes dancing/arts & crafts. This will serve as validation for the work they are doing. (Coincidentally, DMFYS is of the most longstanding relationship that CFMC has.) 
+
+However, many other nonprofits are doing work in other areas. For example, [Clinton Youth and Family Services](https://clintonyouthandfamily.org/) is another nonprofit with similar goals and target demographic as DMFYS. Their website reveals great programs that focus on year-long counseling and summer camps. With information gleaned from this research, CFMC can suggest to other nonprofits working with youth to establish programs that advocate for greater parent involvment in school through a all-parent-book club or all-parent-sports team to increase social ties between parents and hopefully the school. Also, CFMC can recommend programs that increase creative activity opportunities for youth by hosting a play or dance show. 
+
+### II. Suggestions for future research
+
+Using observational data led to multiple issues. First, the sample was not racially diverse. An overwhelming number of the sample was white. This may be because of the location in Middlesex, CT and the school population itself may be predominantly white. Data in other schools with a different demographic should be included.
+
+Next, the matching process could have included more demographic data. The only demographic data available was race. There was no information on gender, age, or financial situation. Moving forward, information should be collected on those factors and included in the analysis.
+
+A potential issue in the experimental design would be the matching process. As currently constructed, matching is implemented for each treatment variable. The matched pairs have around 20 - 80% of the data lost in process. The matched pairs for `parentSchool` and the matched pair for `moreArt` is not the same and this may have an effect on the conclusions drawn from the t-test. However, if they were forced to be the same pairs, more data would be lost. A much larger data set would be needed moving forward to account for this. 
+
+
+
+
